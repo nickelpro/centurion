@@ -5,6 +5,7 @@ target_sources(centurion-headers-only PUBLIC
     blend.hpp
     color.hpp
     display.hpp
+    driver.hpp
     flash_op.hpp
     message_box.hpp
     opengl.hpp
