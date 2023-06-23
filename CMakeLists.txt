@@ -1,18 +1,29 @@
 cmake_minimum_required(VERSION 3.23)
 
-if (DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-  file(TO_CMAKE_PATH $ENV{VCPKG_ROOT} VCPKG_ROOT)
-  set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
-endif ()
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+  include(FetchContent)
+  FetchContent_Declare(
+    vcpkg
+    GIT_REPOSITORY https://github.com/microsoft/vcpkg.git
+    GIT_TAG master
+    GIT_SHALLOW TRUE
+  )
+  FetchContent_MakeAvailable(vcpkg)
+  set(CMAKE_TOOLCHAIN_FILE
+    ${vcpkg_SOURCE_DIR}/scripts/buildsystems/vcpkg.cmake
+    CACHE FILEPATH "Vcpkg toolchain file"
+  )
+  set(VCPKG_ROOT_DIR ${vcpkg_SOURCE_DIR} CACHE PATH "Vcpkg Root Directory")
+endif()
 
 project(centurion
-        VERSION 7.3.0
-        HOMEPAGE_URL "https://github.com/albin-johansson/centurion"
-        LANGUAGES CXX)
+  VERSION 7.3.0
+  HOMEPAGE_URL "https://github.com/albin-johansson/centurion"
+  LANGUAGES CXX)
 
-if ("${CMAKE_CXX_STANDARD}" STREQUAL "")
+if("${CMAKE_CXX_STANDARD}" STREQUAL "")
   set(CMAKE_CXX_STANDARD 17)
-endif ()
+endif()
 
 set(CXX_STANDARD_REQUIRED ON)
 set(CXX_EXTENSIONS OFF)
@@ -52,7 +63,7 @@ add_subdirectory("${CEN_SOURCE_DIR}")
 
 cen_has_SDL(SDL_SHARED SDL_STATIC)
 
-if (SDL_SHARED OR SDL_STATIC)
+if(SDL_SHARED OR SDL_STATIC)
   add_library(centurion INTERFACE)
   add_library(centurion::centurion ALIAS centurion)
   list(APPEND CEN_TARGETS centurion)
@@ -64,9 +75,9 @@ if (SDL_SHARED OR SDL_STATIC)
     $<IF:$<TARGET_EXISTS:SDL2_mixer::SDL2_mixer>,SDL2_mixer::SDL2_mixer,SDL2_mixer::SDL2_mixer-static>
     $<IF:$<TARGET_EXISTS:SDL2_ttf::SDL2_ttf>,SDL2_ttf::SDL2_ttf,SDL2_ttf::SDL2_ttf-static>
   )
-endif ()
+endif()
 
-if (SDL_STATIC)
+if(SDL_STATIC)
   add_library(centurion-static INTERFACE)
   add_library(centurion::centurion-static ALIAS centurion-static)
   list(APPEND CEN_TARGETS centurion-static)
@@ -78,26 +89,26 @@ if (SDL_STATIC)
     SDL2_mixer::SDL2_mixer-static
     SDL2_ttf::SDL2_ttf-static
   )
-endif ()
+endif()
 
-if (BUILD_TESTS OR BUILD_EXAMPLES)
-  if (NOT TARGET centurion::centurion)
+if(BUILD_TESTS OR BUILD_EXAMPLES)
+  if(NOT TARGET centurion::centurion)
     message(FATAL_ERROR "Unable to find required SDL libraries")
   endif()
-endif ()
+endif()
 
-if (BUILD_TESTS)
+if(BUILD_TESTS)
   # Vcpkg test dependencies
   find_package(GTest CONFIG REQUIRED)
   find_package(cereal CONFIG REQUIRED)
   find_package(GLEW REQUIRED)
 
   add_subdirectory(test)
-endif ()
+endif()
 
-if (BUILD_EXAMPLES)
+if(BUILD_EXAMPLES)
   add_subdirectory(examples)
-endif ()
+endif()
 
 # Installer
 include(GNUInstallDirs)
